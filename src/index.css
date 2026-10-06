@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  background: #faf9f9;
+  color: #0f172a;
+}
+
+.progress-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.45) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Chế độ tiết kiệm dữ liệu: tắt bóng/gradient/hiệu ứng, ẩn media trang trí (.ds-media) */
+.datasaver *,
+.datasaver *::before,
+.datasaver *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+}
+.datasaver .bg-gradient-to-r,
+.datasaver .bg-gradient-to-br,
+.datasaver .bg-gradient-to-b {
+  background-image: none !important;
+}
+.datasaver .from-blue-900 {
+  background-color: #1e3a8a !important;
+}
+.datasaver .from-blue-50 {
+  background-color: #f1f5f9 !important;
+}
+.datasaver .progress-stripes {
+  background-image: none !important;
+  background-color: #93c5fd !important;
+}
+.datasaver .ds-media {
+  display: none !important;
+}
