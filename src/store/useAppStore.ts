@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type {
   DonationOrder, Filters, Role, Station, Toast, WizardDraft, Urgency, Product,
-  AccountApproval,
+  AccountApproval, ChatMessage, PendingOrder,
 } from '../types/models';
 import { STATIONS } from '../data/stations';
 import { SAMPLE_ORDERS, PRODUCTS, CARRIERS } from '../data/extras';
@@ -12,6 +12,25 @@ let toastId = 1;
 let orderSeq = 1005;
 
 const AUTH_KEY = 'reliefgrid-auth';
+const PENDING_KEY = 'reliefgrid-pending';
+// Hàng chờ đồng bộ khi tạo đơn lúc offline (demo thay hàng đợi thật)
+function loadPending(): PendingOrder[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    const list = raw ? (JSON.parse(raw) as PendingOrder[]) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+function savePending(list: PendingOrder[]) {
+  try {
+    if (list.length === 0) localStorage.removeItem(PENDING_KEY);
+    else localStorage.setItem(PENDING_KEY, JSON.stringify(list));
+  } catch {
+    /* bỏ qua */
+  }
+}
 // Nhớ đăng nhập (demo, tự xưng vai trò — chưa phải xác thực thật, cần DB+backend mới thật)
 function persistAuth(s: { userRole: Role; userName: string; verifyStatus: string }) {
   try {
@@ -55,10 +74,20 @@ interface AppState {
   toasts: Toast[];
   filters: Filters;
   wizard: WizardDraft;
+  /** Chat donor ↔ NPP (demo cùng máy, 2 phía thấy nhau) */
+  messages: ChatMessage[];
+  /** Đơn tạo khi offline, chờ đồng bộ (chưa cấp mã, chưa tăng T) */
+  pendingSync: PendingOrder[];
 
   // actions
   incT: (stationId: string, itemId: string, qty: number) => void;
-  createOrder: (o: Omit<DonationOrder, 'id' | 'code' | 'createdAt' | 'status'> & { status?: DonationOrder['status'] }) => DonationOrder;
+  createOrder: (o: PendingOrder) => DonationOrder;
+  /** Ghi đơn vào store ngay (cấp mã, tăng T, trừ tồn). createOrder gọi hàm này khi đang online. */
+  commitOrder: (o: PendingOrder) => DonationOrder;
+  /** Tạo đơn khi offline: xếp hàng chờ, chưa cấp mã/chưa tăng T */
+  queueOfflineOrder: (o: PendingOrder) => void;
+  /** Đẩy hàng chờ vào store (có clamp chống vượt S như đơn thường) */
+  syncPending: () => void;
   advanceOrder: (id: string) => void;
   /** Từ chối đơn (trạm/admin). Đơn rejected là trạng thái cuối, biến mất khỏi các list việc. */
   rejectOrder: (orderId: string) => void;
@@ -73,23 +102,25 @@ interface AppState {
   simulateIncoming: (stationId: string) => void;
   setManagedStation: (id: string) => void;
   // Phase 3: Nhà phân phối — quản lý sản phẩm, đơn cứu trợ
-  updateProduct: (id: string, patch: Partial<Pick<Product, 'price' | 'stock' | 'promo' | 'freeShip'>>) => void;
+  updateProduct: (id: string, patch: Partial<Pick<Product, 'price' | 'stock' | 'promo' | 'freeShip' | 'imageUrl' | 'variant'>>) => void;
   setOrderCarrier: (orderId: string, carrierId: string) => void;
   returnOrder: (orderId: string) => void;
   // Phase 3: Admin — duyệt / từ chối trạm
   verifyStation: (id: string) => void;
-  rejectStation: (id: string) => void;
+  rejectStation: (id: string, reason?: string) => void;
   quickLogin: (role: Exclude<Role, null>) => void;
-  registerDemo: (role: Exclude<Role, null>, name: string, proof?: string) => void;
+  registerDemo: (role: Exclude<Role, null>, name: string, proof?: string, phone?: string) => void;
   /** Admin duyệt / từ chối đơn xin tài khoản Trạm-NPP */
   approveAccount: (id: string) => void;
-  rejectAccount: (id: string) => void;
+  rejectAccount: (id: string, reason?: string) => void;
   logout: () => void;
   grantPhone: () => void;
   toggleDataSaver: () => void;
   toggleOffline: () => void;
   pushToast: (msg: string, kind?: Toast['kind']) => void;
   dismissToast: (id: number) => void;
+  /** Gửi tin nhắn chat (kèm 1 câu trả lời tự động demo để không im lặng) */
+  sendMessage: (text: string) => void;
   setFilters: (p: Partial<Filters>) => void;
   setWizard: (p: Partial<WizardDraft>) => void;
   resetWizard: () => void;
@@ -116,6 +147,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
   toasts: [],
   filters: initialFilters,
   wizard: {},
+  pendingSync: loadPending(),
+  messages: [
+    { id: 'm1', fromRole: 'donor', fromName: 'Mạnh Thường Quân (demo)', text: 'Chào shop, 50 thùng nước giao Lệ Thủy mấy ngày tới được?', at: '09:41' },
+    { id: 'm2', fromRole: 'distributor', fromName: 'NPP Miền Trung (demo)', text: 'Dạ được ạ, bên em miễn ship tuyến bão, 2-3 ngày tới nơi!', at: '09:42' },
+  ],
 
   incT: (stationId, itemId, qty) =>
     set((s) => ({
@@ -136,6 +172,21 @@ export const useAppStore = create<AppState>()((set, get) => ({
     })),
 
   createOrder: (o) => {
+    if (get().offline) {
+      get().queueOfflineOrder(o);
+      // Stub để UI không vỡ; đơn thật (có mã) sinh ra khi đồng bộ
+      return {
+        ...o,
+        id: `pending-${Date.now()}`,
+        code: 'CHỜ-ONLINE',
+        createdAt: new Date().toISOString().slice(0, 10),
+        status: 'created',
+      } as DonationOrder;
+    }
+    return get().commitOrder(o);
+  },
+
+  commitOrder: (o) => {
     const code = `RG-${orderSeq++}`;
     const order: DonationOrder = {
       ...o,
@@ -143,12 +194,39 @@ export const useAppStore = create<AppState>()((set, get) => ({
       code,
       createdAt: new Date().toISOString().slice(0, 10),
       status: o.status ?? 'created',
+      // Mã vận đơn demo cho đơn qua ĐVVC/mua trực tiếp (thật do ĐVVC cấp qua API)
+      trackingCode: o.method === 'self' ? undefined : `TRK-${code}`,
+      buyerName: o.buyerName || get().userName || 'Khách vãng lai (demo)',
     };
     // Nghiệp vụ: thành công thì T tăng ngay (đã clamp theo S trong incT)
     get().incT(o.stationId, o.itemId, o.qty);
+    // Đơn mua trực tiếp trừ tồn kho NPP (kẹp >= 0, demo)
+    if (o.productId) {
+      set((s) => ({
+        products: s.products.map((p) => (p.id !== o.productId ? p : { ...p, stock: Math.max(0, p.stock - o.qty) })),
+      }));
+    }
     set((s) => ({ orders: [order, ...s.orders] }));
     get().pushToast(`Tạo đơn ${code} thành công — T đã tăng`, 'success');
     return order;
+  },
+
+  queueOfflineOrder: (o) => {
+    set((s) => {
+      const next = [...s.pendingSync, o];
+      savePending(next);
+      return { pendingSync: next };
+    });
+    get().pushToast('Đã lưu đơn offline — bật Online rồi bấm Đồng bộ để gửi (demo)', 'info');
+  },
+
+  syncPending: () => {
+    const pend = get().pendingSync;
+    if (pend.length === 0) return;
+    for (const o of pend) get().commitOrder(o);
+    savePending([]);
+    set({ pendingSync: [] });
+    get().pushToast(`Đã đồng bộ ${pend.length} đơn chờ — T đã tăng`, 'success');
   },
 
   advanceOrder: (id) =>
@@ -309,10 +387,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
     get().pushToast('Đã duyệt trạm — gắn huy hiệu Đã xác minh', 'success');
   },
 
-  rejectStation: (id) => {
+  rejectStation: (id, reason = '') => {
     const st = get().stations.find((x) => x.id === id);
     set((s) => ({ stations: s.stations.filter((x) => x.id !== id) }));
-    get().pushToast(`Đã từ chối hồ sơ ${st?.name ?? id} (demo: gỡ khỏi danh sách)`, 'warn');
+    get().pushToast(`Đã từ chối hồ sơ ${st?.name ?? id} (demo: gỡ khỏi danh sách)${reason.trim() ? ` — lý do: ${reason.trim()}` : ''}`, 'warn');
   },
 
   quickLogin: (role) => {
@@ -332,7 +410,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     persistAuth(get());
     get().pushToast(`Đã đăng nhập demo vai trò: ${role}`, 'info');
   },
-  registerDemo: (role, name, proof = '') => {
+  registerDemo: (role, name, proof = '', phone = '') => {
     const display = name || 'Tài khoản demo';
     if (role === 'station' || role === 'distributor') {
       // Đăng ký Trạm/NPP: phải chờ admin duyệt. Tên nào đã duyệt trước đó -> verified luôn.
@@ -352,6 +430,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             name: display,
             role,
             proof,
+            phone: phone.trim() || undefined,
             date: new Date().toISOString().slice(0, 10),
           };
           set((s) => ({ approvals: [...s.approvals, entry] }));
@@ -401,11 +480,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
     }
     get().pushToast(`Đã duyệt tài khoản ${a.name} (${a.role})`, 'success');
   },
-  rejectAccount: (id) => {
+  rejectAccount: (id, reason = '') => {
     const a = get().approvals.find((x) => x.id === id);
     if (!a) return;
     set((s) => ({ approvals: s.approvals.filter((x) => x.id !== id) }));
-    get().pushToast(`Đã từ chối hồ sơ ${a.name}`, 'warn');
+    get().pushToast(`Đã từ chối hồ sơ ${a.name}${reason.trim() ? ` — lý do: ${reason.trim()}` : ''}`, 'warn');
   },
   logout: () => {
     set({ userRole: null, isLoggedIn: false, phoneRevealed: false, userName: '', verifyStatus: 'none' });
@@ -425,6 +504,41 @@ export const useAppStore = create<AppState>()((set, get) => ({
     setTimeout(() => get().dismissToast(id), 4000);
   },
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+  sendMessage: (text) => {
+    const t = text.trim();
+    if (!t) return;
+    const s = get();
+    const stamp = () => {
+      const n = new Date();
+      return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+    };
+    const mine: ChatMessage = {
+      id: `m-${Date.now()}`,
+      fromRole: s.userRole ?? 'guest',
+      fromName: s.userName || 'Khách vãng lai (demo)',
+      text: t,
+      at: stamp(),
+    };
+    set((st) => ({ messages: [...st.messages, mine] }));
+    // Trả lời tự động demo từ phía còn lại để hội thoại không im lặng
+    const replyAsNpp = mine.fromRole !== 'distributor';
+    setTimeout(() => {
+      set((st) => ({
+        messages: [
+          ...st.messages,
+          {
+            id: `m-${Date.now()}-r`,
+            fromRole: replyAsNpp ? 'distributor' : 'donor',
+            fromName: replyAsNpp ? 'NPP Miền Trung (demo)' : 'Mạnh Thường Quân (demo)',
+            text: replyAsNpp
+              ? 'Cảm ơn bạn! Đơn này bên mình giao sớm giúp trạm nhé (demo tự động).'
+              : 'Cảm ơn shop! Em chốt đơn, giao sớm giúp trạm nhé (demo tự động).',
+            at: stamp(),
+          },
+        ],
+      }));
+    }, 900);
+  },
   setFilters: (p) => set((s) => ({ filters: { ...s.filters, ...p } })),
   setWizard: (p) => set((s) => ({ wizard: { ...s.wizard, ...p } })),
   resetWizard: () => set({ wizard: {} }),

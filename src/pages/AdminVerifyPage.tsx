@@ -65,14 +65,7 @@ export function AdminVerifyPage() {
                   {(MOCK_PAPERS[st.id] ?? ['Giấy giới thiệu đơn vị', 'Xác nhận địa điểm nhận hàng']).map((p) => <li key={p}>{p}</li>)}
                 </ul>
               </div>
-              <div className="mt-2 flex gap-2">
-                <button onClick={() => verifyStation(st.id)} className="inline-flex items-center gap-1 rounded-lg bg-green-700 px-3 py-1.5 text-xs font-bold text-white">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Duyệt
-                </button>
-                <button onClick={() => rejectStation(st.id)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-bold text-red-700">
-                  <ShieldX className="h-3.5 w-3.5" /> Từ chối
-                </button>
-              </div>
+              <VerifyBox onApprove={() => verifyStation(st.id)} onReject={(r) => rejectStation(st.id, r)} />
             </div>
           ))}
         </>
@@ -129,18 +122,81 @@ export function AdminVerifyPage() {
                 <span className="ml-auto text-xs text-slate-500">{a.date}</span>
               </div>
               {a.proof && <div className="mt-1 text-xs text-slate-600">Minh chứng: {a.proof}</div>}
-              <div className="mt-2 flex gap-2">
-                <button onClick={() => approveAccount(a.id)} className="inline-flex items-center gap-1 rounded-lg bg-green-700 px-3 py-1.5 text-xs font-bold text-white">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Duyệt
-                </button>
-                <button onClick={() => rejectAccount(a.id)} className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-bold text-red-700">
-                  <ShieldX className="h-3.5 w-3.5" /> Từ chối
-                </button>
-              </div>
+              {a.phone && <div className="mt-0.5 text-xs text-slate-600">SĐT đăng ký: <span className="font-mono font-semibold">{a.phone}</span></div>}
+              <VerifyBox onApprove={() => approveAccount(a.id)} onReject={(r) => rejectAccount(a.id, r)} />
             </div>
           ))}
         </>
       )}
+    </div>
+  );
+}
+
+const CHECKS = [
+  { id: 'phone', label: 'SĐT liên lạc được' },
+  { id: 'paper', label: 'Giấy tờ / minh chứng hợp lệ' },
+  { id: 'addr', label: 'Địa chỉ kho rõ ràng' },
+];
+
+/** Checklist xác minh chống trạm "ma" (demo): tick đủ 3 mục mới cho Duyệt, Từ chối kèm lý do */
+function VerifyBox({ onApprove, onReject }: { onApprove: () => void; onReject: (reason: string) => void }) {
+  const pushToast = useAppStore((s) => s.pushToast);
+  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [reason, setReason] = useState('');
+  const [showReason, setShowReason] = useState(false);
+  const done = CHECKS.every((c) => checks[c.id]);
+  return (
+    <div className="mt-2 rounded-xl bg-slate-50 p-2">
+      <div className="text-xs font-bold text-slate-600">Xác minh chống trạm "ma" (demo)</div>
+      <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-700">
+        {CHECKS.map((c) => (
+          <label key={c.id} className="inline-flex cursor-pointer items-center gap-1">
+            <input
+              type="checkbox"
+              checked={!!checks[c.id]}
+              onChange={(e) => setChecks((m) => ({ ...m, [c.id]: e.target.checked }))}
+            />
+            {c.label}
+          </label>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => {
+            if (!done) {
+              pushToast('Tick đủ 3 mục xác minh trước khi Duyệt (demo)', 'warn');
+              return;
+            }
+            onApprove();
+          }}
+          className="inline-flex items-center gap-1 rounded-lg bg-green-700 px-3 py-1.5 text-xs font-bold text-white"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" /> Duyệt
+        </button>
+        {!showReason ? (
+          <button
+            onClick={() => setShowReason(true)}
+            className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-bold text-red-700"
+          >
+            <ShieldX className="h-3.5 w-3.5" /> Từ chối
+          </button>
+        ) : (
+          <>
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Lý do từ chối…"
+              className="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs"
+            />
+            <button
+              onClick={() => onReject(reason)}
+              className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white"
+            >
+              Xác nhận
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

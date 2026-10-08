@@ -52,6 +52,7 @@ export function CarrierPage() {
               <div><b>Lấy hàng:</b> {o.method === 'buy' ? 'Kho NPP Miền Trung, Đà Nẵng' : 'Địa chỉ người gửi (xem đơn)'} </div>
               <div><b>Giao đến:</b> {st?.name ?? o.stationId} — {st?.address}</div>
               <div><b>Hàng:</b> {o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name} • ~{kg.toLocaleString('vi-VN')} kg</div>
+              <div><b>Mã vận đơn (demo):</b> <span className="font-mono font-semibold">{o.trackingCode ?? '—'}</span></div>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {(o.status === 'created' || o.status === 'confirmed' || o.status === 'preparing') && (

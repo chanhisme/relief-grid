@@ -29,6 +29,11 @@ export function StationDetailPage() {
           <span className="text-xs text-slate-500">{st.distanceKm} km từ TP.HCM</span>
         </div>
         <h1 className="mt-2 text-xl font-extrabold text-blue-950 md:text-2xl">{st.name}</h1>
+        {!st.verified && (
+          <div className="mt-2 rounded-xl border border-yellow-300 bg-yellow-50 p-2 text-xs font-medium text-yellow-900">
+            Trạm đang <b>chờ xác minh</b> (demo) — hãy kiểm tra kỹ giấy tờ và liên hệ trực tiếp trước khi gửi hàng.
+          </div>
+        )}
         <div className="mt-1 text-sm text-slate-600">Đơn vị: {st.org} • Liên hệ: {st.contact}</div>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
           <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{st.address}</span>

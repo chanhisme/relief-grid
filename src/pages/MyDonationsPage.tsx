@@ -10,10 +10,36 @@ export function MyDonationsPage() {
   const orders = useAppStore((s) => s.orders);
   const stations = useAppStore((s) => s.stations);
   const advanceOrder = useAppStore((s) => s.advanceOrder);
+  const pendingSync = useAppStore((s) => s.pendingSync);
+  const syncPending = useAppStore((s) => s.syncPending);
+  const offline = useAppStore((s) => s.offline);
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 py-6">
       <h1 className="text-xl font-extrabold text-blue-950">Quyên góp của tôi</h1>
+      {pendingSync.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+          <div className="text-sm font-bold text-amber-900">
+            Đơn chờ đồng bộ ({pendingSync.length}) — tạo khi offline, chưa cấp mã, chưa tăng T
+          </div>
+          <ul className="mt-2 space-y-1 text-sm text-amber-900">
+            {pendingSync.map((o, i) => (
+              <li key={i} className="rounded-lg bg-white/70 px-2 py-1">
+                <b>{o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name}</b> →{' '}
+                {stations.find((x) => x.id === o.stationId)?.name ?? o.stationId}
+                <span className="text-amber-700"> ({o.method === 'self' ? 'Tự mang' : o.method === 'carrier' ? 'Vận chuyển' : 'Mua trực tiếp'})</span>
+              </li>
+            ))}
+          </ul>
+          {offline ? (
+            <p className="mt-2 text-xs text-amber-800">Bật Online ở header rồi quay lại đây để đồng bộ.</p>
+          ) : (
+            <button onClick={syncPending} className="mt-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700">
+              Đồng bộ ngay ({pendingSync.length} đơn)
+            </button>
+          )}
+        </div>
+      )}
       {orders.length === 0 && <p className="text-sm">Chưa có đơn. <Link to="/quyen-gop" className="text-orange-600 underline">Quyên góp ngay</Link></p>}
       {orders.map((o) => {
         const st = stations.find((x) => x.id === o.stationId);
@@ -29,6 +55,12 @@ export function MyDonationsPage() {
               <b>{o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name}</b> → {st?.name ?? o.stationId}
               <span className="text-slate-500"> ({o.method === 'self' ? 'Tự mang' : o.method === 'carrier' ? 'Vận chuyển' : 'Mua trực tiếp'})</span>
             </div>
+            {o.trackingCode && (
+              <div className="mt-1 text-xs text-slate-600">
+                Mã vận đơn (demo): <span className="font-mono font-bold">{o.trackingCode}</span>
+                {o.buyerName && <span> • Người gửi: {o.buyerName}</span>}
+              </div>
+            )}
             {/* timeline (đơn bị từ chối là trạng thái cuối, hiện cảnh báo thay vì tiến trình) */}
             {o.status === 'rejected' ? (
               <div className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">

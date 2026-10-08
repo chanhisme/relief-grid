@@ -28,6 +28,8 @@ export function Header() {
   const isLoggedIn = useAppStore((s) => s.isLoggedIn);
   const userRole = useAppStore((s) => s.userRole);
   const logout = useAppStore((s) => s.logout);
+  const pendingSync = useAppStore((s) => s.pendingSync);
+  const syncPending = useAppStore((s) => s.syncPending);
   const [open, setOpen] = useState(false);
 
   return (
@@ -86,6 +88,15 @@ export function Header() {
       {offline && (
         <div className="bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900">
           Bạn đang offline, dữ liệu sẽ đồng bộ khi có mạng (demo).
+          {pendingSync.length > 0 && ` • ${pendingSync.length} đơn chờ.`}
+        </div>
+      )}
+      {!offline && pendingSync.length > 0 && (
+        <div className="flex items-center justify-center gap-2 bg-blue-100 px-4 py-1.5 text-center text-xs font-medium text-blue-900">
+          <span>Có {pendingSync.length} đơn chờ từ lúc offline.</span>
+          <button onClick={syncPending} className="rounded-full bg-blue-800 px-3 py-0.5 font-bold text-white hover:bg-blue-900">
+            Đồng bộ ngay
+          </button>
         </div>
       )}
       {open && (

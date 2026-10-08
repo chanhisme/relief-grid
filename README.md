@@ -13,6 +13,7 @@ Dữ liệu mock trong `src/data`, state demo trong zustand (reload thì hàng h
 ```bash
 npm install
 npm run dev     # chạy local
+npm test        # unit test logic D/R/T/S + min-cost flow + store (vitest)
 npm run build   # build production (bắt buộc pass, không lỗi TypeScript)
 ```
 

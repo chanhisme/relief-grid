@@ -68,6 +68,10 @@ export interface Product {
   stock: number;
   promo?: string;
   freeShip?: boolean;
+  /** Ảnh SP demo (URL dán tay, không upload thật) */
+  imageUrl?: string;
+  /** Mẫu mã demo (VD: "thùng 30 gói") */
+  variant?: string;
 }
 
 export interface Carrier {
@@ -89,12 +93,30 @@ export interface DonationOrder {
   productId?: string;
   createdAt: string;
   proofImg?: string;
+  /** Mã vận đơn demo (đơn carrier/buy): TRK-<mã đơn>. Thực tế do ĐVVC cấp qua API. */
+  trackingCode?: string;
+  /** Tên người đặt (prefill từ tài khoản demo) — dùng cho lịch sử KH phía NPP */
+  buyerName?: string;
+  /** Cổng thanh toán giả lập (đơn mua trực tiếp) */
+  payMethod?: PayMethod;
 }
+
+export type PayMethod = 'momo' | 'zalopay' | 'bank';
 
 export interface Toast {
   id: number;
   msg: string;
   kind: 'success' | 'info' | 'warn';
+}
+
+/** Tin nhắn donor ↔ NPP (demo cùng máy, thấy nhau 2 phía) */
+export interface ChatMessage {
+  id: string;
+  /** Vai trò người gửi: donor | station | distributor | admin | guest */
+  fromRole: string;
+  fromName: string;
+  text: string;
+  at: string; // HH:MM
 }
 
 /** Đơn xin cấp tài khoản Trạm/NPP chờ admin duyệt (demo thay DB) */
@@ -104,6 +126,8 @@ export interface AccountApproval {
   role: 'station' | 'distributor';
   proof: string;
   date: string;
+  /** SĐT đăng ký (để admin đối chiếu chống trạm "ma") */
+  phone?: string;
 }
 
 export interface WizardDraft {
@@ -114,6 +138,8 @@ export interface WizardDraft {
   carrierId?: string;
   productId?: string;
   pickupAddress?: string;
+  /** Cổng thanh toán giả lập đã chọn ở bước mua trực tiếp */
+  payMethod?: PayMethod;
 }
 
 export interface Filters {
@@ -123,3 +149,8 @@ export interface Filters {
   maxKm: number;
   keyword: string;
 }
+
+/** Đơn tạo khi offline, chờ đồng bộ (chưa có mã, chưa tăng T) */
+export type PendingOrder = Omit<DonationOrder, 'id' | 'code' | 'createdAt' | 'status' | 'trackingCode'> & {
+  status?: DonationOrder['status'];
+};

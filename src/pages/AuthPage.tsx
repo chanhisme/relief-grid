@@ -49,7 +49,7 @@ export function AuthPage() {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    registerDemo(role, name.trim() || `Tài khoản ${role} (demo)`, proof.trim());
+    registerDemo(role, name.trim() || `Tài khoản ${role} (demo)`, proof.trim(), phone.trim());
     navigate(role === 'station' ? '/tram-quan-ly' : '/');
   }
 
