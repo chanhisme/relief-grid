@@ -53,6 +53,11 @@ export function HomePage() {
       {/* Hero */}
       <section className="grid gap-4 rounded-3xl bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white md:grid-cols-2 md:p-8">
         <div>
+          <img
+            src="/logo.jpg"
+            alt="ReliefGrid — Trạm cứu trợ số"
+            className="ds-media mb-3 h-12 w-auto rounded-xl bg-white object-contain px-2 py-1"
+          />
           <h1 className="text-2xl font-extrabold leading-tight md:text-4xl">Đừng để lòng tốt bị lãng phí</h1>
           <p className="mt-2 text-sm text-blue-100 md:text-base">
             Trạm cập nhật nhu cầu theo từng mặt hàng — bạn chọn đúng thứ đang thiếu. Đủ hàng là hệ thống tự khóa.

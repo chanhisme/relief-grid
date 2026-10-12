@@ -56,6 +56,7 @@ export function AuthPage() {
   if (isLoggedIn) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-10 text-center">
+        <img src="/logo.jpg" alt="ReliefGrid" className="ds-media mx-auto h-12 w-auto rounded-xl bg-white object-contain px-2 py-1 shadow-sm" />
         <h1 className="text-xl font-extrabold text-blue-950">Đã đăng nhập demo</h1>
         <p className="text-sm text-slate-600">
           {userName} • vai trò <b>{userRole}</b>
@@ -81,6 +82,7 @@ export function AuthPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 py-6">
+      <img src="/logo.jpg" alt="ReliefGrid — Trạm cứu trợ số" className="ds-media h-12 w-auto rounded-xl bg-white object-contain px-2 py-1 shadow-sm" />
       <h1 className="text-xl font-extrabold text-blue-950">Đăng ký / Đăng nhập</h1>
       <p className="text-sm text-slate-600">Chọn 1 trong 3 vai trò. Trạm và Nhà phân phối cần admin duyệt sau khi đăng ký.</p>
 

@@ -36,9 +36,17 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 font-extrabold text-blue-900">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-800 text-white">
-            <HeartHandshake className="h-5 w-5" />
-          </span>
+          {dataSaver ? (
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-800 text-white">
+              <HeartHandshake className="h-5 w-5" />
+            </span>
+          ) : (
+            <img
+              src="/logo.jpg"
+              alt="ReliefGrid — Trạm cứu trợ số"
+              className="h-9 w-auto rounded-lg bg-white object-contain"
+            />
+          )}
           <span className="leading-tight">
             ReliefGrid
             <span className="block text-[11px] font-medium text-slate-500">Trạm cứu trợ số</span>
@@ -127,7 +135,10 @@ export function Footer() {
     <footer className="mt-12 border-t bg-white">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm text-slate-600 md:grid-cols-3">
         <div>
-          <div className="font-bold text-blue-900">ReliefGrid — Đừng để lòng tốt bị lãng phí</div>
+          <div className="flex items-center gap-2 font-bold text-blue-900">
+            <img src="/logo.jpg" alt="ReliefGrid" className="ds-media h-8 w-auto rounded-md bg-white object-contain" />
+            <span>Đừng để lòng tốt bị lãng phí</span>
+          </div>
           <p className="mt-1">Demo giao diện thi AISC'26. Không backend, dữ liệu mock, reload sẽ reset.</p>
         </div>
         <div>
