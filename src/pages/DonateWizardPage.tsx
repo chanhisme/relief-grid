@@ -299,7 +299,7 @@ export function DonateWizardPage() {
                         onClick={() => setWizard({ productId: p.id })}
                         className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${wizard.productId === p.id ? 'border-orange-500 bg-orange-50' : ''}`}>
                         {p.imageUrl ? (
-                          <img src={p.imageUrl} alt={p.name} onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none'; }}
+                          <img src={p.imageUrl} alt={p.name} loading="lazy" decoding="async" onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none'; }}
                             className="h-8 w-8 shrink-0 rounded-lg border object-cover" />
                         ) : (
                           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-800"><ItemIcon icon={itemById(p.itemId).icon} /></span>

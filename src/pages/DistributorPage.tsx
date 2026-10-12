@@ -271,7 +271,7 @@ export function DistributorPage() {
               <div key={p.id} className="rounded-xl border p-2 text-sm">
                 <div className="flex items-center gap-2">
                   {preview ? (
-                    <img src={preview} alt={p.name} onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none'; }}
+                    <img src={preview} alt={p.name} loading="lazy" decoding="async" onError={(ev) => { (ev.target as HTMLImageElement).style.display = 'none'; }}
                       className="h-9 w-9 shrink-0 rounded-xl border object-cover" />
                   ) : (
                     <span className="ds-media grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-800"><ItemIcon icon={itemById(p.itemId).icon} /></span>

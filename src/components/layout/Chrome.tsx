@@ -45,6 +45,8 @@ export function Header() {
               src="/logo.jpg"
               alt="ReliefGrid — Trạm cứu trợ số"
               className="h-9 w-auto rounded-lg bg-white object-contain"
+              loading="lazy"
+              decoding="async"
             />
           )}
           <span className="leading-tight">
@@ -133,10 +135,10 @@ export function StatusBar() {
 export function Footer() {
   return (
     <footer className="mt-12 border-t bg-white">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm text-slate-600 md:grid-cols-3">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm text-slate-600 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2 font-bold text-blue-900">
-            <img src="/logo.jpg" alt="ReliefGrid" className="ds-media h-8 w-auto rounded-md bg-white object-contain" />
+            <img src="/logo.jpg" alt="ReliefGrid" className="ds-media h-8 w-auto rounded-md bg-white object-contain" loading="lazy" decoding="async" />
             <span>Đừng để lòng tốt bị lãng phí</span>
           </div>
           <p className="mt-1">Demo giao diện thi AISC'26. Không backend, dữ liệu mock, reload sẽ reset.</p>

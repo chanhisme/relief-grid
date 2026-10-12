@@ -57,6 +57,8 @@ export function HomePage() {
             src="/logo.jpg"
             alt="ReliefGrid — Trạm cứu trợ số"
             className="ds-media mb-3 h-12 w-auto rounded-xl bg-white object-contain px-2 py-1"
+            loading="lazy"
+            decoding="async"
           />
           <h1 className="text-2xl font-extrabold leading-tight md:text-4xl">Đừng để lòng tốt bị lãng phí</h1>
           <p className="mt-2 text-sm text-blue-100 md:text-base">
