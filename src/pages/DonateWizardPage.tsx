@@ -188,6 +188,9 @@ export function DonateWizardPage() {
                   <button onClick={() => setWizard({ stationId: st.id })} className="text-left font-bold text-blue-950 hover:underline">
                     {st.name}
                   </button>
+                  <Link to={`/tram/${st.id}#minh-chung`} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline">
+                    Xem trạm & minh chứng
+                  </Link>
                   {st.id === bestId && <span className="rounded-full bg-green-600 px-2 py-0.5 text-[11px] font-bold text-white">Gợi ý phù hợp nhất</span>}
                   <span className="ml-auto text-xs text-slate-500">{st.distanceKm} km • {st.province}</span>
                 </div>
@@ -346,6 +349,49 @@ export function DonateWizardPage() {
               </div>
             </div>
           )}
+          {method && stationId && qty > 0 && (() => {
+            const st = stations.find((x) => x.id === stationId);
+            const product = products.find((p) => p.id === wizard.productId);
+            const carrier = carriers.find((c) => c.id === wizard.carrierId);
+            const goodsTotal = method === 'buy' && product ? qty * product.price : 0;
+            const shipFee = method === 'carrier' && carrier ? carrier.fee : 0;
+            const total = goodsTotal + shipFee;
+            const payLabel = PAY_METHODS.find((m) => m.id === wizard.payMethod)?.label;
+            const legs = over && canSplit && surplusPlan ? surplusPlan.allocations : [{ stationId, allocQty: qty }];
+            return (
+              <div className="rounded-2xl border bg-white p-3 text-sm">
+                <div className="font-bold">Tóm tắt đơn (kiểu Shopee, demo)</div>
+                <div className="mt-1 text-xs text-slate-600">
+                  Địa chỉ nhận: <b className="text-slate-800">{st?.name}</b> — {st?.address} • {st?.pickupHours}
+                </div>
+                {legs.length > 1 && (
+                  <div className="mt-1 text-xs text-slate-600">
+                    Chia {legs.length} đơn: {legs.map((l) => {
+                      const s = stations.find((x) => x.id === (('stationId' in l) ? (l as { stationId: string }).stationId : stationId));
+                      const q = ('allocQty' in l) ? (l as { allocQty: number }).allocQty : qty;
+                      return `${s?.name ?? stationId} (${q})`;
+                    }).join(' • ')}
+                  </div>
+                )}
+                <div className="mt-1 text-xs text-slate-600">
+                  {method === 'buy' && product
+                    ? <><b className="text-slate-800">{product.name}</b> × {qty} {itemById(product.itemId).unit} — {formatVND(product.price)} / đơn vị = <b className="text-slate-800">{formatVND(goodsTotal)}</b></>
+                    : <>Hàng tự có: <b className="text-slate-800">{qty} {itemId && itemById(itemId).unit} {itemId && itemById(itemId).name}</b> (không mua)</>}
+                </div>
+                <div className="mt-1 text-xs text-slate-600">
+                  {method === 'carrier'
+                    ? <>Vận chuyển: <b className="text-slate-800">{carrier ? `${carrier.name} — ${carrier.fee === 0 ? 'miễn phí' : formatVND(carrier.fee)} • ${carrier.eta}` : 'chưa chọn ĐVVC'}</b></>
+                    : method === 'buy'
+                      ? <>Vận chuyển: <b className="text-slate-800">NPP giao thẳng đến trạm (demo, chưa tính phí riêng)</b></>
+                      : <>Vận chuyển: <b className="text-slate-800">Tự mang đến điểm tập kết (mã QR ở bước hoàn tất)</b></>}
+                </div>
+                {method === 'buy' && (
+                  <div className="mt-1 text-xs text-slate-600">Thanh toán: <b className="text-slate-800">{payLabel ?? 'chưa chọn cổng'}</b> (giả lập, bấm là thành công)</div>
+                )}
+                <div className="mt-2 border-t pt-2 text-right text-sm">Tổng tiền: <b className="text-orange-700">{formatVND(total)}</b>{method !== 'buy' && method !== 'carrier' && <span className="text-xs text-slate-500"> (tự mang, không mua)</span>}</div>
+              </div>
+            );
+          })()}
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-xl border px-4 py-2 text-sm font-bold">Quay lại</button>
             <button onClick={submit} disabled={!canNext3} title={!canNext3 ? 'Chọn đủ thông tin hình thức' : ''}

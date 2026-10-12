@@ -67,16 +67,16 @@ export function MyDonationsPage() {
                 Đơn này đã bị trạm/admin từ chối. Bạn có thể tạo đơn mới hoặc chọn trạm khác.
               </div>
             ) : (
-            <ol className="mt-3 flex items-center gap-0 text-[10px]">
+            <ol className="mt-3 flex items-center gap-0 overflow-x-auto px-1 text-[10px]">
               {FLOW.map((f, i) => (
-                <li key={f} className="flex flex-1 items-center last:flex-none">
-                  <div className="flex flex-col items-center">
-                    <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${i <= idx ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                <li key={f} className="flex min-w-0 flex-1 items-center last:flex-none">
+                  <div className="flex min-w-0 flex-col items-center">
+                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${i <= idx ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                       {i + 1}
                     </span>
-                    <span className="mt-0.5 hidden sm:block">{orderStatusLabel(f).split(' ')[0]}</span>
+                    <span className="mt-1 max-w-[56px] break-words text-center text-[9px] leading-tight text-slate-600 sm:max-w-none sm:text-[10px]">{orderStatusLabel(f).split(' ').slice(0, 2).join(' ')}</span>
                   </div>
-                  {i < FLOW.length - 1 && <span className={`mx-1 h-0.5 flex-1 ${i < idx ? 'bg-green-600' : 'bg-slate-200'}`} />}
+                  {i < FLOW.length - 1 && <span className={`mx-1 h-0.5 min-w-[8px] flex-1 ${i < idx ? 'bg-green-600' : 'bg-slate-200'}`} />}
                 </li>
               ))}
             </ol>
@@ -89,7 +89,12 @@ export function MyDonationsPage() {
               )}
               {o.status === 'received' && (
                 <span className="rounded-lg bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-                  {o.proofImg ? `Ảnh xác nhận: ${o.proofImg}` : 'Trạm đã nhận hàng'}
+                  {o.proofImg && (/^(https?:\/\/|\/|data:image)/.test(o.proofImg) ? (
+                    <img src={o.proofImg} alt={`Minh chứng đơn ${o.code}`} loading="lazy" decoding="async" className="ds-media mt-1 h-20 w-auto rounded-lg border object-cover" />
+                  ) : (
+                    `Ảnh xác nhận: ${o.proofImg}`
+                  ))}
+                  {!o.proofImg && 'Trạm đã nhận hàng'}
                 </span>
               )}
               {o.status !== 'received' && o.status !== 'rejected' && (

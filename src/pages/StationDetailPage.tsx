@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { MapPin, Clock, Flag } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { VerifiedBadge } from '../components/ui/Badges';
@@ -11,8 +12,15 @@ import { calcS } from '../lib/needLogic';
 
 export function StationDetailPage() {
   const { id } = useParams();
+  const { hash } = useLocation();
   const st = useAppStore((s) => s.stations.find((x) => x.id === id));
   const pushToast = useAppStore((s) => s.pushToast);
+
+  useEffect(() => {
+    if (hash === '#minh-chung') {
+      document.getElementById('minh-chung')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hash, id]);
 
   if (!st) return <div className="py-10">Không tìm thấy trạm. <Link to="/" className="text-blue-700 underline">Về trang chủ</Link></div>;
 
@@ -75,7 +83,7 @@ export function StationDetailPage() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-4">
+        <div id="minh-chung" className="scroll-mt-20 rounded-2xl border bg-white p-4">
           <h3 className="font-bold">Cập nhật mới nhất</h3>
           {st.proofs.length === 0 ? <p className="text-sm text-slate-500">Chưa có minh chứng.</p> :
             st.proofs.map((p) => (
