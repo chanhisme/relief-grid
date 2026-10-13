@@ -63,3 +63,23 @@ export function orderStatusLabel(s: string): string {
       return s;
   }
 }
+
+/** Nhãn ngắn gọn, đủ chữ cho timeline đơn hàng (không cắt cụt). */
+export function orderStatusShort(s: string): string {
+  switch (s) {
+    case 'created':
+      return 'Đã tạo';
+    case 'confirmed':
+      return 'Đã xác nhận';
+    case 'preparing':
+      return 'Đang chuẩn bị';
+    case 'shipping':
+      return 'Đang giao';
+    case 'received':
+      return 'Đã giao';
+    case 'rejected':
+      return 'Đã từ chối';
+    default:
+      return s;
+  }
+}

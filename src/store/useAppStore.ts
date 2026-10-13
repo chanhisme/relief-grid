@@ -10,6 +10,27 @@ import { calcS } from '../lib/needLogic';
 
 let toastId = 1;
 let orderSeq = 1005;
+try {
+  // Giữ counter qua reload để mã đơn không bao giờ tái sử dụng
+  const raw = localStorage.getItem('reliefgrid-orderseq');
+  const n = raw ? Number(raw) : NaN;
+  if (Number.isFinite(n) && n > orderSeq) orderSeq = Math.floor(n);
+} catch {
+  /* bỏ qua */
+}
+/** Sinh mã đơn duy nhất (RG-1005, RG-1006, ...), bỏ qua mã đã tồn tại. */
+function nextOrderCode(existing: Set<string>): string {
+  let code = '';
+  do {
+    code = `RG-${orderSeq++}`;
+  } while (existing.has(code));
+  try {
+    localStorage.setItem('reliefgrid-orderseq', String(orderSeq));
+  } catch {
+    /* bỏ qua */
+  }
+  return code;
+}
 
 const ROLE_LABEL: Record<string, string> = {
   station: 'Trạm cứu trợ',
@@ -194,7 +215,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   },
 
   commitOrder: (o) => {
-    const code = `RG-${orderSeq++}`;
+    const code = nextOrderCode(new Set(get().orders.map((x) => x.code)));
     const order: DonationOrder = {
       ...o,
       id: `o-${code}`,

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { QrCode, Truck, ShoppingCart, HandHeart, CheckCircle2, MessageCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAppStore } from '../store/useAppStore';
 import { itemById } from '../data/items';
 import { ItemIcon } from '../components/ui/ItemIcon';
@@ -163,8 +164,12 @@ export function DonateWizardPage() {
           ))}
         </div>
         {method === 'self' && !multi && (
-          <div className="mx-auto grid h-40 w-40 place-items-center rounded-2xl border-2 border-dashed bg-white">
-            <div className="text-center"><QrCode className="mx-auto h-10 w-10" /><div className="mt-1 font-mono text-sm font-bold">{doneOrders[0].code}</div><div className="text-[11px] text-slate-500">Trạm quét để xác nhận</div></div>
+          <div className="mx-auto w-fit rounded-2xl border-2 border-dashed bg-white p-3">
+            <div className="text-center">
+              <QRCodeSVG value={doneOrders[0].code} size={160} className="mx-auto" />
+              <div className="mt-1 font-mono text-sm font-bold">{doneOrders[0].code}</div>
+              <div className="text-[11px] text-slate-500">Trạm quét để xác nhận</div>
+            </div>
           </div>
         )}
         <div className="flex justify-center gap-2">
@@ -177,7 +182,7 @@ export function DonateWizardPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 py-6">
-      <h1 className="text-xl font-extrabold text-blue-950">Quyên góp (3 bước)</h1>
+      <h1 className="text-xl font-extrabold text-blue-950">Quyên góp</h1>
       <ol className="flex gap-1 text-[10px] sm:text-xs">
         {STEPS.map((t, i) => (
           <li key={i} className={`min-w-0 flex-1 truncate rounded-lg px-1.5 py-1.5 text-center font-semibold sm:px-2 ${i === step ? 'bg-blue-800 text-white' : i < step ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}>
@@ -413,7 +418,7 @@ export function DonateWizardPage() {
               <div className="rounded-2xl border bg-white p-3 text-sm">
                 <div className="font-bold">Tóm tắt đơn hàng</div>
                 <div className="mt-1 text-xs text-slate-600">
-                  Địa chỉ nhận: <b className="text-slate-800">{st?.name}</b> — {st?.address} • {st?.pickupHours}
+                  Địa chỉ nhận: <b className="text-slate-800">{st?.name}</b> — {st?.address}
                 </div>
                 {legs.length > 1 && (
                   <div className="mt-1 text-xs text-slate-600">
@@ -427,7 +432,7 @@ export function DonateWizardPage() {
                 <div className="mt-1 text-xs text-slate-600">
                   {method === 'buy' && product
                     ? <><b className="text-slate-800">{product.name}</b> × {qty} {itemById(product.itemId).unit} — {formatVND(product.price)} / đơn vị = <b className="text-slate-800">{formatVND(goodsTotal)}</b></>
-                    : <>Hàng tự có: <b className="text-slate-800">{qty} {itemId && itemById(itemId).unit} {itemId && itemById(itemId).name}</b> (không mua)</>}
+                    : <>Hàng tự có: <b className="text-slate-800">{qty} {itemId && itemById(itemId).unit} {itemId && itemById(itemId).name}</b></>}
                 </div>
                 <div className="mt-1 text-xs text-slate-600">
                   {method === 'carrier'
@@ -439,7 +444,7 @@ export function DonateWizardPage() {
                 {method === 'buy' && (
                   <div className="mt-1 text-xs text-slate-600">Thanh toán: <b className="text-slate-800">{payLabel ?? 'chưa chọn phương thức'}</b></div>
                 )}
-                <div className="mt-2 border-t pt-2 text-right text-sm">Tổng tiền: <b className="text-orange-700">{formatVND(total)}</b>{method !== 'buy' && method !== 'carrier' && <span className="text-xs text-slate-500"> (tự mang, không mua)</span>}</div>
+                <div className="mt-2 border-t pt-2 text-right text-sm">Tổng tiền: <b className="text-orange-700">{formatVND(total)}</b></div>
               </div>
             );
           })()}

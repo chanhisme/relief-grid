@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAppStore } from '../store/useAppStore';
 import { itemById } from '../data/items';
-import { orderStatusLabel, formatDateVN } from '../lib/format';
+import { orderStatusLabel, orderStatusShort, formatDateVN } from '../lib/format';
 
 const FLOW: string[] = ['created', 'confirmed', 'preparing', 'shipping', 'received'];
 
@@ -74,7 +74,7 @@ export function MyDonationsPage() {
                     <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${i <= idx ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
                       {i + 1}
                     </span>
-                    <span className="mt-1 max-w-[56px] break-words text-center text-[9px] leading-tight text-slate-600 sm:max-w-none sm:text-[10px]">{orderStatusLabel(f).split(' ').slice(0, 2).join(' ')}</span>
+                    <span className="mt-1 max-w-[68px] break-words text-center text-[9px] leading-tight text-slate-600 sm:max-w-none sm:text-[10px]">{orderStatusShort(f)}</span>
                   </div>
                   {i < FLOW.length - 1 && <span className={`mx-1 h-0.5 min-w-[8px] flex-1 ${i < idx ? 'bg-green-600' : 'bg-slate-200'}`} />}
                 </li>
@@ -83,8 +83,8 @@ export function MyDonationsPage() {
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {o.method === 'self' && (
-                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-bold">
-                  <QrCode className="h-4 w-4" /> {o.code}
+                <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-2 py-1 font-mono text-xs font-bold">
+                  <QRCodeSVG value={o.code} size={56} /> {o.code}
                 </span>
               )}
               {o.status === 'received' && (
