@@ -49,7 +49,7 @@ export function AuthPage() {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    registerDemo(role, name.trim() || `Tài khoản ${role} (demo)`, proof.trim(), phone.trim());
+    registerDemo(role, name.trim() || `Tài khoản ${QUICK_LABEL[role] ?? role}`, proof.trim(), phone.trim());
     navigate(role === 'station' ? '/tram-quan-ly' : '/');
   }
 
@@ -57,14 +57,14 @@ export function AuthPage() {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-10 text-center">
         <img src="/logo.jpg" alt="ReliefGrid" className="ds-media mx-auto h-12 w-auto rounded-xl bg-white object-contain px-2 py-1 shadow-sm" loading="lazy" decoding="async" />
-        <h1 className="text-xl font-extrabold text-blue-950">Đã đăng nhập demo</h1>
+        <h1 className="text-xl font-extrabold text-blue-950">Đăng nhập thành công</h1>
         <p className="text-sm text-slate-600">
           {userName} • vai trò <b>{userRole}</b>
           {(userRole === 'station' || userRole === 'distributor') && verifyStatus === 'pending' && (
             <span className="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-bold text-yellow-800">Chờ admin duyệt</span>
           )}
           {(userRole === 'station' || userRole === 'distributor') && verifyStatus === 'verified' && (
-            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">Đã duyệt (demo)</span>
+            <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">Đã duyệt</span>
           )}
         </p>
         <div className="flex justify-center gap-2">
@@ -72,7 +72,7 @@ export function AuthPage() {
             <Link to="/tram-quan-ly" className="rounded-xl bg-blue-800 px-4 py-2 text-sm font-bold text-white">Vào dashboard trạm</Link>
           )}
           {userRole === 'distributor' && (
-            <Link to="/nha-phan-phoi" className="rounded-xl bg-blue-800 px-4 py-2 text-sm font-bold text-white">Vào gian hàng NPP</Link>
+            <Link to="/nha-phan-phoi" className="rounded-xl bg-blue-800 px-4 py-2 text-sm font-bold text-white">Vào gian hàng nhà phân phối</Link>
           )}
           <button onClick={logout} className="rounded-xl border px-4 py-2 text-sm font-bold">Đăng xuất</button>
         </div>
@@ -112,13 +112,13 @@ export function AuthPage() {
         {role === 'station' && (
           <label className="block text-sm font-semibold">Minh chứng pháp lý / xác nhận địa phương
             <input value={proof} onChange={(e) => setProof(e.target.value)} placeholder="VD: Công văn UBND xã số 12/CV-UBND" className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm font-normal" />
-            <span className="mt-1 block text-xs font-normal text-slate-500">Demo: nhập text thay vì upload file. Sau khi gửi, tài khoản ở trạng thái “Chờ admin duyệt”.</span>
+            <span className="mt-1 block text-xs font-normal text-slate-500">Nhập nội dung thay vì tải file lên. Sau khi gửi, tài khoản ở trạng thái “Chờ admin duyệt”.</span>
           </label>
         )}
         {role === 'distributor' && (
           <label className="block text-sm font-semibold">Giấy phép kinh doanh / minh chứng
             <input value={proof} onChange={(e) => setProof(e.target.value)} placeholder="VD: GPKD số 0101234567" className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm font-normal" />
-            <span className="mt-1 block text-xs font-normal text-slate-500">Demo: nhập text thay vì upload file. Sau khi gửi, tài khoản ở trạng thái “Chờ admin duyệt”.</span>
+            <span className="mt-1 block text-xs font-normal text-slate-500">Nhập nội dung thay vì tải file lên. Sau khi gửi, tài khoản ở trạng thái “Chờ admin duyệt”.</span>
           </label>
         )}
         <button className="w-full rounded-xl bg-blue-800 px-4 py-2 text-sm font-bold text-white">
@@ -127,7 +127,7 @@ export function AuthPage() {
       </form>
 
       <div className="rounded-2xl border border-dashed bg-slate-50 p-4">
-        <div className="flex items-center gap-1 text-sm font-bold"><Zap className="h-4 w-4" /> Đăng nhập nhanh demo (để trình diễn)</div>
+        <div className="flex items-center gap-1 text-sm font-bold"><Zap className="h-4 w-4" /> Đăng nhập nhanh</div>
         <div className="mt-2 flex flex-wrap gap-2">
           {(Object.keys({ station: 1, donor: 1, distributor: 1 }) as Exclude<Role, null>[]).map((r) => (
             <button

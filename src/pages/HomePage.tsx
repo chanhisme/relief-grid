@@ -36,12 +36,12 @@ export function HomePage() {
   }, [stations, filters]);
 
   const urgentToday = useMemo(() => {
-    const rows: { sid: string; sname: string; prov: string; itemId: string; s: number; d: number; urg: string }[] = [];
+    const rows: { sid: string; sname: string; prov: string; itemId: string; s: number; d: number; r: number; t: number; urg: string }[] = [];
     for (const st of stations) {
       for (const n of st.needs) {
         const s = calcS(n);
         if (s > 0 && (n.urgency === 'critical' || n.urgency === 'high')) {
-          rows.push({ sid: st.id, sname: st.name, prov: st.province, itemId: n.itemId, s, d: n.D, urg: n.urgency });
+          rows.push({ sid: st.id, sname: st.name, prov: st.province, itemId: n.itemId, s, d: n.D, r: n.R, t: n.T, urg: n.urgency });
         }
       }
     }
@@ -132,7 +132,7 @@ export function HomePage() {
             <Link key={i} to={`/tram/${r.sid}`} className="rounded-2xl border bg-white p-3 shadow-sm hover:border-orange-400">
               <div className="text-xs text-slate-500">{r.sname} • {r.prov}</div>
               <div className="text-sm font-bold">{itemById(r.itemId).name}</div>
-              <div className="text-sm">còn thiếu <b className="text-orange-700">{r.s}/{r.d} {itemById(r.itemId).unit}</b></div>
+              <div className="text-sm">Còn thiếu: <b className="text-orange-700">{r.s} {itemById(r.itemId).unit}</b> • Tiến độ: {r.r + r.t}/{r.d}</div>
             </Link>
           ))}
         </div>

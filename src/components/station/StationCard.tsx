@@ -35,13 +35,13 @@ export function StationCard({ station, compact = false }: { station: Station; co
       {station.provinceOld !== station.province && (
         <div className="text-[11px] text-slate-400">Địa chỉ cũ: {station.address.replace(station.province, station.provinceOld)}</div>
       )}
-      <div className="mt-1 text-xs">SĐT: <MaskedPhone phone={station.phone} compact /></div>
+      <div className="mt-1 text-xs">Số điện thoại: <MaskedPhone phone={station.phone} compact /></div>
       <div className="mt-2 space-y-1 text-sm">
         {missing.length === 0 && <div className="text-green-700 font-semibold">Trạm đã nhận đủ — cảm ơn!</div>}
         {missing.map(({ n, s, item }) => (
           <div key={n.itemId} className="flex justify-between gap-2 text-[13px]">
             <span className="text-slate-700">{item.name}</span>
-            <span className="font-semibold text-orange-700">còn thiếu {s}/{n.D} {item.unit}</span>
+            <span className="font-semibold text-orange-700">Còn {s} {item.unit} • Tiến độ {n.R + n.T}/{n.D}</span>
           </div>
         ))}
       </div>

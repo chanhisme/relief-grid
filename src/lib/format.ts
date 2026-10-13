@@ -8,6 +8,13 @@ export function formatVND(n: number): string {
   return n.toLocaleString('vi-VN') + 'đ';
 }
 
+/** '2026-10-13' -> '13/10/2026'. Cắt chuỗi thủ công để khỏi lệch timezone. */
+export function formatDateVN(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec((iso ?? '').trim());
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 export function urgencyLabel(u: string): string {
   switch (u) {
     case 'low':

@@ -79,7 +79,7 @@ export function Header() {
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 font-semibold ${dataSaver ? 'border-green-300 bg-green-50 text-green-700' : 'text-slate-600'}`}
             title="Bật thì ẩn ảnh, giảm hiệu ứng"
           >
-            <Leaf className="h-3.5 w-3.5" /> Tiết kiệm DL {dataSaver ? 'Bật' : 'Tắt'}
+            <Leaf className="h-3.5 w-3.5" /> Tiết kiệm dữ liệu {dataSaver ? 'Bật' : 'Tắt'}
           </button>
           {isLoggedIn ? (
             <button onClick={logout} className="rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700">
@@ -97,7 +97,7 @@ export function Header() {
       </div>
       {offline && (
         <div className="bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900">
-          Bạn đang offline, dữ liệu sẽ đồng bộ khi có mạng (demo).
+          Bạn đang ở chế độ offline, đơn sẽ được đồng bộ khi có mạng trở lại.
           {pendingSync.length > 0 && ` • ${pendingSync.length} đơn chờ.`}
         </div>
       )}
@@ -135,9 +135,9 @@ export function StatusBar() {
 export function Footer() {
   return (
     <footer className="mt-12 border-t bg-white">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm text-slate-600 md:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-center text-sm text-slate-600 md:grid-cols-3">
         <div>
-          <div className="flex items-center gap-2 font-bold text-blue-900">
+          <div className="flex items-center justify-center gap-2 font-bold text-blue-900">
             <img src="/logo.jpg" alt="ReliefGrid" className="ds-media h-8 w-auto rounded-md bg-white object-contain" loading="lazy" decoding="async" />
             <span>Đừng để lòng tốt bị lãng phí</span>
           </div>
@@ -149,16 +149,12 @@ export function Footer() {
         </div>
         <div>
           <div className="font-semibold">Khám phá</div>
-          <p className="mt-1 space-x-3">
+          <div className="mt-1 flex flex-col items-center gap-1">
             <Link to="/nha-phan-phoi" className="hover:text-blue-800">Mua sắm</Link>
             <Link to="/thong-ke" className="hover:text-blue-800">Thống kê</Link>
             <Link to="/van-chuyen" className="hover:text-blue-800">Vận chuyển</Link>
             <Link to="/tram-quan-ly" className="hover:text-blue-800">Trạm quản lý</Link>
-          </p>
-        </div>
-        <div>
-          <div className="font-semibold">Ghi chú</div>
-          <p>S = max(0, D − R − T). S = 0 thì khóa quyên góp.</p>
+          </div>
         </div>
       </div>
     </footer>

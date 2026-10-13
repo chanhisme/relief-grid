@@ -23,7 +23,7 @@ export function NeedItem({ stationId, need, showDonate = true }: { stationId: st
         </span>
         <div className="min-w-0">
           <div className="truncate text-sm font-bold">{item.name}</div>
-          <div className="text-xs text-slate-500">D {need.D} • R {need.R} • T {need.T} • <b className={s === 0 ? 'text-green-700' : 'text-orange-700'}>S {s}</b> {item.unit}</div>
+          <div className="text-xs text-slate-500">Cần: {need.D} • Đã nhận: {need.R} • Đang giao: {need.T} • <b className={s === 0 ? 'text-green-700' : 'text-orange-700'}>Còn thiếu: {s}</b> {item.unit}</div>
         </div>
         <div className="ml-auto flex flex-col items-end gap-1">
           <UrgencyBadge level={need.urgency} />
@@ -39,7 +39,7 @@ export function NeedItem({ stationId, need, showDonate = true }: { stationId: st
             title="Trạm đã nhận đủ, hãy chọn nhu cầu khác"
             className="w-full cursor-not-allowed rounded-xl bg-green-200 px-3 py-2 text-sm font-bold text-green-900"
           >
-            Đã đủ — khóa quyên góp
+            Đã nhận đủ hàng
           </button>
           <Alternatives stationId={stationId} itemId={need.itemId} />
         </div>
@@ -49,7 +49,7 @@ export function NeedItem({ stationId, need, showDonate = true }: { stationId: st
             to={`/quyen-gop?item=${need.itemId}&station=${stationId}`}
             className="mt-2 block rounded-xl bg-orange-500 px-3 py-2 text-center text-sm font-bold text-white hover:bg-orange-600"
           >
-            Quyên góp • còn thiếu {s} {item.unit}
+            Quyên góp ngay • Còn {s} {item.unit}
           </Link>
         )
       )}
@@ -63,11 +63,11 @@ function Alternatives({ stationId, itemId }: { stationId: string; itemId: string
   if (alts.length === 0) return null;
   return (
     <div className="mt-2 rounded-xl bg-white p-2 text-xs">
-      <div className="font-semibold text-slate-700">Trạm khác còn thiếu {itemById(itemId).name}:</div>
+      <div className="font-semibold text-slate-700">Trạm khác còn cần {itemById(itemId).name}:</div>
       {alts.map((a) => (
         <Link key={a.station.id} to={`/tram/${a.station.id}`} className="mt-1 block rounded-lg border px-2 py-1 hover:border-orange-400">
           <span className="font-semibold text-blue-900">{a.station.name}</span>
-          <span className="text-slate-500"> — thiếu {a.s} • {a.station.province}</span>
+          <span className="text-slate-500"> — còn {a.s} • {a.station.province}</span>
         </Link>
       ))}
     </div>

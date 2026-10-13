@@ -11,6 +11,13 @@ import { calcS } from '../lib/needLogic';
 let toastId = 1;
 let orderSeq = 1005;
 
+const ROLE_LABEL: Record<string, string> = {
+  station: 'Trạm cứu trợ',
+  donor: 'Người quyên góp',
+  distributor: 'Nhà phân phối',
+  admin: 'Quản trị viên',
+};
+
 const AUTH_KEY = 'reliefgrid-auth';
 const PENDING_KEY = 'reliefgrid-pending';
 // Hàng chờ đồng bộ khi tạo đơn lúc offline (demo thay hàng đợi thật)
@@ -149,8 +156,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
   wizard: {},
   pendingSync: loadPending(),
   messages: [
-    { id: 'm1', fromRole: 'donor', fromName: 'Mạnh Thường Quân (demo)', text: 'Chào shop, 50 thùng nước giao Lệ Thủy mấy ngày tới được?', at: '09:41' },
-    { id: 'm2', fromRole: 'distributor', fromName: 'NPP Miền Trung (demo)', text: 'Dạ được ạ, bên em miễn ship tuyến bão, 2-3 ngày tới nơi!', at: '09:42' },
+    { id: 'm1', fromRole: 'donor', fromName: 'Mạnh Thường Quân', text: 'Chào shop, 50 thùng nước giao Lệ Thủy mấy ngày tới được?', at: '09:41' },
+    { id: 'm2', fromRole: 'distributor', fromName: 'Nhà phân phối Miền Trung', text: 'Dạ được ạ, bên em miễn ship tuyến bão, 2-3 ngày tới nơi!', at: '09:42' },
   ],
 
   incT: (stationId, itemId, qty) =>
@@ -196,7 +203,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       status: o.status ?? 'created',
       // Mã vận đơn demo cho đơn qua ĐVVC/mua trực tiếp (thật do ĐVVC cấp qua API)
       trackingCode: o.method === 'self' ? undefined : `TRK-${code}`,
-      buyerName: o.buyerName || get().userName || 'Khách vãng lai (demo)',
+      buyerName: o.buyerName || get().userName || 'Khách vãng lai',
     };
     // Nghiệp vụ: thành công thì T tăng ngay (đã clamp theo S trong incT)
     get().incT(o.stationId, o.itemId, o.qty);
@@ -207,7 +214,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       }));
     }
     set((s) => ({ orders: [order, ...s.orders] }));
-    get().pushToast(`Tạo đơn ${code} thành công — T đã tăng`, 'success');
+    get().pushToast(`Tạo đơn ${code} thành công — tiến độ trạm đã cập nhật`, 'success');
     return order;
   },
 
@@ -217,7 +224,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       savePending(next);
       return { pendingSync: next };
     });
-    get().pushToast('Đã lưu đơn offline — bật Online rồi bấm Đồng bộ để gửi (demo)', 'info');
+    get().pushToast('Đã lưu đơn — bật mạng rồi bấm Đồng bộ để gửi đơn', 'info');
   },
 
   syncPending: () => {
@@ -226,7 +233,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     for (const o of pend) get().commitOrder(o);
     savePending([]);
     set({ pendingSync: [] });
-    get().pushToast(`Đã đồng bộ ${pend.length} đơn chờ — T đã tăng`, 'success');
+    get().pushToast(`Đã đồng bộ ${pend.length} đơn chờ — tiến độ trạm đã cập nhật`, 'success');
   },
 
   advanceOrder: (id) =>
@@ -278,7 +285,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       ),
       orders: orderId
         ? s.orders.map((o) =>
-            o.id !== orderId ? o : { ...o, status: 'received' as const, proofImg: 'Ảnh xác nhận từ trạm (demo)' },
+            o.id !== orderId ? o : { ...o, status: 'received' as const, proofImg: 'Ảnh xác nhận từ trạm' },
           )
         : s.orders,
     }));
@@ -288,9 +295,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
       if (sAfter === 0 && before > 0) {
         get().pushToast('Đã đủ hàng — hệ thống đã đóng nhận quyên góp mặt hàng này', 'success');
       } else if (qty < orderQty) {
-        get().pushToast(`Giao thiếu ${orderQty - qty} — phần thiếu đã quay lại S, nhu cầu mở lại`, 'warn');
+        get().pushToast(`Giao thiếu ${orderQty - qty} — phần còn thiếu đã được cập nhật, trạm vẫn tiếp tục nhận quyên góp`, 'warn');
       } else {
-        get().pushToast(`Đã xác nhận nhận ${qty} (R tăng, T giảm)`, 'success');
+        get().pushToast(`Đã xác nhận nhận ${qty} — tiến độ trạm đã cập nhật`, 'success');
       }
       if (sAfter > 0 && after.D > 0) {
         const pct = Math.round((sAfter / after.D) * 100);
@@ -340,7 +347,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       stations: s.stations.map((x) =>
         x.id !== stationId
           ? x
-          : { ...x, proofs: [{ id: `pf-${Date.now()}`, title: t, date: new Date().toISOString().slice(0, 10), imageLabel: 'Ảnh minh chứng (demo)' }, ...x.proofs] },
+          : { ...x, proofs: [{ id: `pf-${Date.now()}`, title: t, date: new Date().toISOString().slice(0, 10), imageLabel: 'Ảnh minh chứng' }, ...x.proofs] },
       ),
     }));
     get().pushToast('Đã đăng minh chứng mới', 'success');
@@ -390,25 +397,25 @@ export const useAppStore = create<AppState>()((set, get) => ({
   rejectStation: (id, reason = '') => {
     const st = get().stations.find((x) => x.id === id);
     set((s) => ({ stations: s.stations.filter((x) => x.id !== id) }));
-    get().pushToast(`Đã từ chối hồ sơ ${st?.name ?? id} (demo: gỡ khỏi danh sách)${reason.trim() ? ` — lý do: ${reason.trim()}` : ''}`, 'warn');
+    get().pushToast(`Đã từ chối hồ sơ ${st?.name ?? id}${reason.trim() ? ` — lý do: ${reason.trim()}` : ''}`, 'warn');
   },
 
   quickLogin: (role) => {
     const names: Record<string, string> = {
-      station: 'Trạm Con Cuông (demo)',
-      distributor: 'NPP Miền Trung (demo)',
-      donor: 'Mạnh Thường Quân (demo)',
-      admin: 'Quản trị viên (demo)',
+      station: 'Trạm Con Cuông',
+      distributor: 'Nhà phân phối Miền Trung',
+      donor: 'Mạnh Thường Quân',
+      admin: 'Quản trị viên',
     };
     // Đăng nhập nhanh = cửa dev/diễn nhanh -> coi như đã xác minh (kể cả NPP)
     set({
       userRole: role,
       isLoggedIn: true,
-      userName: names[role] ?? `Tài khoản ${role} (demo)`,
+      userName: names[role] ?? `Tài khoản ${ROLE_LABEL[role] ?? role}`,
       verifyStatus: role === 'donor' || role === 'admin' ? 'none' : 'verified',
     });
     persistAuth(get());
-    get().pushToast(`Đã đăng nhập demo vai trò: ${role}`, 'info');
+    get().pushToast(`Đã đăng nhập vai trò ${ROLE_LABEL[role] ?? role}`, 'info');
   },
   registerDemo: (role, name, proof = '', phone = '') => {
     const display = name || 'Tài khoản demo';
@@ -456,7 +463,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       verifyStatus: 'none',
     });
     persistAuth(get());
-    get().pushToast(`Đã tạo tài khoản demo: ${role} (dùng ngay, không cần duyệt)`, 'success');
+    get().pushToast(`Đã tạo tài khoản ${ROLE_LABEL[role] ?? role} — dùng ngay, không cần duyệt`, 'success');
   },
   approveAccount: (id) => {
     const a = get().approvals.find((x) => x.id === id);
@@ -515,7 +522,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     const mine: ChatMessage = {
       id: `m-${Date.now()}`,
       fromRole: s.userRole ?? 'guest',
-      fromName: s.userName || 'Khách vãng lai (demo)',
+      fromName: s.userName || 'Khách vãng lai',
       text: t,
       at: stamp(),
     };
@@ -529,10 +536,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
           {
             id: `m-${Date.now()}-r`,
             fromRole: replyAsNpp ? 'distributor' : 'donor',
-            fromName: replyAsNpp ? 'NPP Miền Trung (demo)' : 'Mạnh Thường Quân (demo)',
+            fromName: replyAsNpp ? 'Nhà phân phối Miền Trung' : 'Mạnh Thường Quân',
             text: replyAsNpp
-              ? 'Cảm ơn bạn! Đơn này bên mình giao sớm giúp trạm nhé (demo tự động).'
-              : 'Cảm ơn shop! Em chốt đơn, giao sớm giúp trạm nhé (demo tự động).',
+              ? 'Cảm ơn bạn! Đơn này bên mình giao sớm giúp trạm nhé.'
+              : 'Cảm ơn shop! Em chốt đơn, giao sớm giúp trạm nhé.',
             at: stamp(),
           },
         ],

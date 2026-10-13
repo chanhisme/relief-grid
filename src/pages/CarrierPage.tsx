@@ -27,7 +27,7 @@ export function CarrierPage() {
     <div className="mx-auto max-w-3xl space-y-4 py-6">
       <h1 className="text-xl font-extrabold text-blue-950">Đơn vị vận chuyển</h1>
       <p className="rounded-2xl border bg-slate-50 p-3 text-xs text-slate-600">
-        Thực tế kết nối qua API với hệ thống của đơn vị vận chuyển. Demo này mô phỏng 3 đối tác:{' '}
+        Hệ thống kết nối với các đơn vị vận chuyển. Hiện có 3 đối tác:{' '}
         {carriers.map((c) => c.name).join(' • ')}.
       </p>
       <div className="grid grid-cols-2 gap-2">
@@ -35,7 +35,7 @@ export function CarrierPage() {
         <div className="rounded-2xl bg-green-50 p-3"><div className="text-xl font-extrabold text-green-800">{done}</div><div className="text-xs">đơn đã hoàn tất</div></div>
       </div>
 
-      {jobs.length === 0 && <p className="text-sm text-slate-500">Không có yêu cầu nào. Tạo đơn quyên góp (hình thức VC / mua trực tiếp) để thấy ở đây.</p>}
+      {jobs.length === 0 && <p className="text-sm text-slate-500">Không có yêu cầu nào. Tạo đơn quyên góp (hình thức vận chuyển / mua trực tiếp) để thấy ở đây.</p>}
       {jobs.map((o) => {
         const st = stations.find((x) => x.id === o.stationId);
         const need = st?.needs.find((n) => n.itemId === o.itemId);
@@ -46,13 +46,13 @@ export function CarrierPage() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono font-bold">{o.code}</span>
               {need && <UrgencyBadge level={need.urgency} />}
-              <span className="ml-auto text-xs text-slate-500">{carrier?.name ?? 'Chưa gán ĐVVC'}</span>
+              <span className="ml-auto text-xs text-slate-500">{carrier?.name ?? 'Chưa gán đơn vị vận chuyển'}</span>
             </div>
             <div className="mt-1.5 space-y-0.5 text-[13px] text-slate-700">
-              <div><b>Lấy hàng:</b> {o.method === 'buy' ? 'Kho NPP Miền Trung, Đà Nẵng' : 'Địa chỉ người gửi (xem đơn)'} </div>
+              <div><b>Lấy hàng:</b> {o.method === 'buy' ? 'Kho nhà phân phối Miền Trung, Đà Nẵng' : 'Địa chỉ người gửi (xem đơn)'} </div>
               <div><b>Giao đến:</b> {st?.name ?? o.stationId} — {st?.address}</div>
               <div><b>Hàng:</b> {o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name} • ~{kg.toLocaleString('vi-VN')} kg</div>
-              <div><b>Mã vận đơn (demo):</b> <span className="font-mono font-semibold">{o.trackingCode ?? '—'}</span></div>
+              <div><b>Mã vận đơn:</b> <span className="font-mono font-semibold">{o.trackingCode ?? '—'}</span></div>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {(o.status === 'created' || o.status === 'confirmed' || o.status === 'preparing') && (
@@ -70,7 +70,7 @@ export function CarrierPage() {
                 </button>
               )}
               {o.status === 'shipping' && (
-                <button onClick={() => { advanceOrder(o.id); pushToast(`Đơn ${o.code}: đã giao — chờ trạm kiểm kê xác nhận R/T`, 'success'); }}
+                <button onClick={() => { advanceOrder(o.id); pushToast(`Đơn ${o.code}: đã giao — chờ trạm kiểm kê xác nhận`, 'success'); }}
                   className="inline-flex items-center gap-1 rounded-lg bg-green-700 px-3 py-1.5 text-xs font-bold text-white">
                   <PackageCheck className="h-3.5 w-3.5" /> Đã giao hàng
                 </button>

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { QrCode } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { itemById } from '../data/items';
-import { orderStatusLabel } from '../lib/format';
+import { orderStatusLabel, formatDateVN } from '../lib/format';
 
 const FLOW: string[] = ['created', 'confirmed', 'preparing', 'shipping', 'received'];
 
@@ -20,7 +20,7 @@ export function MyDonationsPage() {
       {pendingSync.length > 0 && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <div className="text-sm font-bold text-amber-900">
-            Đơn chờ đồng bộ ({pendingSync.length}) — tạo khi offline, chưa cấp mã, chưa tăng T
+            Đơn chờ đồng bộ ({pendingSync.length}) — tạo khi mất mạng, sẽ được ghi nhận khi bạn đồng bộ
           </div>
           <ul className="mt-2 space-y-1 text-sm text-amber-900">
             {pendingSync.map((o, i) => (
@@ -49,7 +49,7 @@ export function MyDonationsPage() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-sm font-bold">{o.code}</span>
               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800">{orderStatusLabel(o.status)}</span>
-              <span className="ml-auto text-xs text-slate-500">{o.createdAt}</span>
+              <span className="ml-auto text-xs text-slate-500">{formatDateVN(o.createdAt)}</span>
             </div>
             <div className="mt-1 text-sm">
               <b>{o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name}</b> → {st?.name ?? o.stationId}
@@ -57,7 +57,7 @@ export function MyDonationsPage() {
             </div>
             {o.trackingCode && (
               <div className="mt-1 text-xs text-slate-600">
-                Mã vận đơn (demo): <span className="font-mono font-bold">{o.trackingCode}</span>
+                Mã vận đơn: <span className="font-mono font-bold">{o.trackingCode}</span>
                 {o.buyerName && <span> • Người gửi: {o.buyerName}</span>}
               </div>
             )}

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { FileCheck, ShieldCheck, ShieldX, PackageCheck } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { itemById } from '../data/items';
-import { orderStatusLabel } from '../lib/format';
+import { orderStatusLabel, formatDateVN } from '../lib/format';
 
 const MOCK_PAPERS: Record<string, string[]> = {
   'caobang-1': ['Công văn UBND xã Bảo Lạc số 08/CV-UBND', 'Biên bản xác nhận địa điểm kho'],
@@ -60,7 +60,7 @@ export function AdminVerifyPage() {
               <div className="font-bold text-blue-950">{st.name}</div>
               <div className="text-xs text-slate-500">{st.org} • {st.address} • Liên hệ {st.contact}</div>
               <div className="mt-2 rounded-xl bg-slate-50 p-2">
-                <div className="flex items-center gap-1 text-xs font-bold"><FileCheck className="h-3.5 w-3.5" /> Giấy tờ đính kèm (demo)</div>
+                <div className="flex items-center gap-1 text-xs font-bold"><FileCheck className="h-3.5 w-3.5" /> Giấy tờ đính kèm</div>
                 <ul className="mt-1 list-disc pl-5 text-xs text-slate-600">
                   {(MOCK_PAPERS[st.id] ?? ['Giấy giới thiệu đơn vị', 'Xác nhận địa điểm nhận hàng']).map((p) => <li key={p}>{p}</li>)}
                 </ul>
@@ -86,7 +86,7 @@ export function AdminVerifyPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono font-bold">{o.code}</span>
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800">{orderStatusLabel(o.status)}</span>
-                  <span className="ml-auto text-xs text-slate-500">{o.createdAt}</span>
+                  <span className="ml-auto text-xs text-slate-500">{formatDateVN(o.createdAt)}</span>
                 </div>
                 <div className="mt-1 text-[13px]">
                   <b>{o.qty} {itemById(o.itemId).unit} {itemById(o.itemId).name}</b> → {st?.name ?? o.stationId}
@@ -107,7 +107,7 @@ export function AdminVerifyPage() {
       {tab === 'accounts' && (
         <>
           <p className="rounded-2xl border bg-slate-50 p-3 text-xs text-slate-600">
-            Tài khoản Trạm/NPP mới đăng ký phải chờ duyệt. Donor đăng ký dùng ngay, không qua đây.
+            Tài khoản Trạm cứu trợ / Nhà phân phối mới đăng ký phải chờ duyệt. Người quyên góp đăng ký dùng ngay, không qua đây.
           </p>
           {approvals.length === 0 && (
             <p className="rounded-2xl border bg-white p-4 text-sm text-slate-500">Không có hồ sơ chờ duyệt.</p>
@@ -119,10 +119,10 @@ export function AdminVerifyPage() {
                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
                   {a.role === 'station' ? 'Trạm cứu trợ' : 'Nhà phân phối'}
                 </span>
-                <span className="ml-auto text-xs text-slate-500">{a.date}</span>
+                <span className="ml-auto text-xs text-slate-500">{formatDateVN(a.date)}</span>
               </div>
               {a.proof && <div className="mt-1 text-xs text-slate-600">Minh chứng: {a.proof}</div>}
-              {a.phone && <div className="mt-0.5 text-xs text-slate-600">SĐT đăng ký: <span className="font-mono font-semibold">{a.phone}</span></div>}
+              {a.phone && <div className="mt-0.5 text-xs text-slate-600">Số điện thoại đăng ký: <span className="font-mono font-semibold">{a.phone}</span></div>}
               <VerifyBox onApprove={() => approveAccount(a.id)} onReject={(r) => rejectAccount(a.id, r)} />
             </div>
           ))}
@@ -133,7 +133,7 @@ export function AdminVerifyPage() {
 }
 
 const CHECKS = [
-  { id: 'phone', label: 'SĐT liên lạc được' },
+  { id: 'phone', label: 'Số điện thoại liên lạc được' },
   { id: 'paper', label: 'Giấy tờ / minh chứng hợp lệ' },
   { id: 'addr', label: 'Địa chỉ kho rõ ràng' },
 ];
@@ -147,7 +147,7 @@ function VerifyBox({ onApprove, onReject }: { onApprove: () => void; onReject: (
   const done = CHECKS.every((c) => checks[c.id]);
   return (
     <div className="mt-2 rounded-xl bg-slate-50 p-2">
-      <div className="text-xs font-bold text-slate-600">Xác minh chống trạm "ma" (demo)</div>
+      <div className="text-xs font-bold text-slate-600">Xác minh chống trạm "ma"</div>
       <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-700">
         {CHECKS.map((c) => (
           <label key={c.id} className="inline-flex cursor-pointer items-center gap-1">
@@ -164,7 +164,7 @@ function VerifyBox({ onApprove, onReject }: { onApprove: () => void; onReject: (
         <button
           onClick={() => {
             if (!done) {
-              pushToast('Tick đủ 3 mục xác minh trước khi Duyệt (demo)', 'warn');
+              pushToast('Tick đủ 3 mục xác minh trước khi Duyệt', 'warn');
               return;
             }
             onApprove();

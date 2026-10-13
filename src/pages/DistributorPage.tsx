@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { AlertTriangle, MessageCircle, Search, TrendingUp, Users, Wallet, X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { itemById } from '../data/items';
-import { formatVND, orderStatusLabel } from '../lib/format';
+import { formatVND, formatDateVN, orderStatusLabel } from '../lib/format';
 import { ItemIcon } from '../components/ui/ItemIcon';
 
 /** Doanh số nền mock (demo) — cộng với đơn mua-trực-tiếp thật từ store */
@@ -33,8 +33,10 @@ export function DistributorPage() {
   const userRole = useAppStore((s) => s.userRole);
   const quickLogin = useAppStore((s) => s.quickLogin);
   const verifyStatus = useAppStore((s) => s.verifyStatus);
-  // NPP đăng ký chưa được admin duyệt -> khóa các tác vụ chính
-  const locked = userRole === 'distributor' && verifyStatus !== 'verified';
+  // Chỉ nhà phân phối đã duyệt mới được thao tác (rút tiền, sửa SP, xử lý đơn...)
+  // Vai trò khác không thấy các nút này (ẩn hẳn, không khóa mờ)
+  const isDistributor = userRole === 'distributor';
+  const locked = !isDistributor || verifyStatus !== 'verified';
   const lockTitle = 'Tài khoản đang chờ admin duyệt';
   const updateProduct = useAppStore((s) => s.updateProduct);
   const advanceOrder = useAppStore((s) => s.advanceOrder);
@@ -107,7 +109,7 @@ export function DistributorPage() {
 
   const revChart = useMemo(() => {
     if (revRange === 'today') {
-      return [{ label: 'Hôm nay', value: realByDate[todayStr] ?? 0, hint: 'đơn thật trong ngày (demo)' }];
+      return [{ label: 'Hôm nay', value: realByDate[todayStr] ?? 0, hint: 'đơn phát sinh trong ngày' }];
     }
     if (revRange === 'month') {
       const buckets = [0, 0, 0, 0];
@@ -118,7 +120,7 @@ export function DistributorPage() {
         buckets[week] += v;
       }
       const mockWeek = (WEEK_REVENUE.reduce((a, b) => a + b, 0) * 1e6) / 4;
-      return buckets.map((v, i) => ({ label: `Tuần ${i + 1}`, value: mockWeek + v, hint: 'nền mock + đơn thật (demo)' }));
+      return buckets.map((v, i) => ({ label: `Tuần ${i + 1}`, value: mockWeek + v, hint: 'số liệu minh họa + đơn phát sinh' }));
     }
     // 7 ngày qua (mặc định): nền mock theo ngày + đơn thật cộng dồn
     const out: { label: string; value: number; hint: string }[] = [];
@@ -129,7 +131,7 @@ export function DistributorPage() {
       out.push({
         label: ds.slice(8, 10) + '/' + ds.slice(5, 7),
         value: WEEK_REVENUE[6 - i] * 1e6 + (realByDate[ds] ?? 0),
-        hint: 'nền mock + đơn thật (demo)',
+        hint: 'số liệu minh họa + đơn phát sinh',
       });
     }
     return out;
@@ -139,7 +141,7 @@ export function DistributorPage() {
   const customers = useMemo(() => {
     const m = new Map<string, { name: string; count: number; spent: number; lastDate: string }>();
     for (const o of buyOrders) {
-      const name = o.buyerName || 'Khách vãng lai (demo)';
+      const name = o.buyerName || 'Khách vãng lai';
       const p = products.find((x) => x.id === o.productId);
       const e = m.get(name) ?? { name, count: 0, spent: 0, lastDate: '' };
       e.count += 1;
@@ -164,6 +166,10 @@ export function DistributorPage() {
   }
 
   function saveBank() {
+    if (locked) {
+      pushToast('Chỉ tài khoản Nhà phân phối đã được duyệt mới được lưu tài khoản nhận tiền', 'warn');
+      return;
+    }
     const v = { bankName: bankDraft.bankName.trim(), acc: bankDraft.acc.trim().replace(/\s/g, '') };
     if (!v.bankName || !v.acc) {
       pushToast('Nhập đủ tên ngân hàng + số tài khoản', 'warn');
@@ -179,6 +185,10 @@ export function DistributorPage() {
   }
 
   function openWithdraw() {
+    if (locked) {
+      pushToast('Chỉ tài khoản Nhà phân phối đã được duyệt mới được rút tiền', 'warn');
+      return;
+    }
     if (!bank.acc) {
       pushToast('Hãy lưu tài khoản nhận tiền trước khi rút', 'warn');
       return;
@@ -193,23 +203,25 @@ export function DistributorPage() {
       {(!isLoggedIn || userRole !== 'distributor') && (
         <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-3 text-sm">
           Đăng nhập vai trò Nhà phân phối để quản lý gian hàng.{' '}
-          <button onClick={() => quickLogin('distributor')} className="rounded-lg bg-blue-800 px-2 py-1 text-xs font-bold text-white">Đăng nhập nhanh: NPP</button>
+          <button onClick={() => quickLogin('distributor')} className="rounded-lg bg-blue-800 px-2 py-1 text-xs font-bold text-white">Đăng nhập nhanh: Nhà phân phối</button>
         </div>
       )}
-      {locked && (
+      {isDistributor && verifyStatus !== 'verified' && (
         <div className="rounded-2xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">
-          Tài khoản NPP đang chờ admin duyệt — các nút Rút tiền, Lưu sản phẩm, Xử lý đơn tạm khóa.
+          Tài khoản nhà phân phối đang chờ admin duyệt — các nút Rút tiền, Lưu sản phẩm, Xử lý đơn tạm khóa.
         </div>
       )}
 
       {/* KPI + doanh thu */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <div className="rounded-2xl bg-blue-900 p-3 text-white"><div className="text-lg font-extrabold">{(revenue / 1e6).toFixed(1)}tr</div><div className="text-[11px] opacity-80">doanh thu cứu trợ (demo)</div></div>
+        <div className="rounded-2xl bg-blue-900 p-3 text-white"><div className="text-lg font-extrabold">{(revenue / 1e6).toFixed(1)}tr</div><div className="text-[11px] opacity-80">doanh thu cứu trợ</div></div>
         <div className="rounded-2xl bg-orange-50 p-3"><div className="text-lg font-extrabold text-orange-800">{buyOrders.length}</div><div className="text-[11px]">đơn cứu trợ</div></div>
-        <div className="rounded-2xl bg-red-50 p-3"><div className="text-lg font-extrabold text-red-700">{lowStock.length}</div><div className="text-[11px]">SP sắp hết hàng</div></div>
+        <div className="rounded-2xl bg-red-50 p-3"><div className="text-lg font-extrabold text-red-700">{lowStock.length}</div><div className="text-[11px]">sản phẩm sắp hết hàng</div></div>
+        {isDistributor && (
         <button disabled={locked} title={locked ? lockTitle : 'Rút tiền về tài khoản'} onClick={openWithdraw} className="grid place-items-center rounded-2xl bg-green-700 p-3 font-bold text-white hover:bg-green-800 disabled:opacity-40">
           <span className="inline-flex items-center gap-1 text-sm"><Wallet className="h-4 w-4" /> Rút tiền</span>
         </button>
+        )}
       </div>
 
       {/* Doanh thu theo kỳ */}
@@ -236,10 +248,10 @@ export function DistributorPage() {
         <div className="mt-1 text-[11px] text-slate-500">{revChart[0]?.hint} — tạo đơn mua mới để thấy cột nhảy.</div>
         <div className="mt-2 grid gap-1 text-xs sm:grid-cols-3">
           <div className="rounded-xl bg-slate-50 px-2.5 py-1.5">Bán chạy: <b>{best.map((b) => `${b.p.name.split('(')[0].trim()} (${b.qty})`).join(' • ')}</b></div>
-          <div className="rounded-xl bg-slate-50 px-2.5 py-1.5">Tồn nhiều nhất: <b>{mostStocked.map((p) => `${p.name.split('(')[0].trim()} (${p.stock})`).join(' • ')}</b></div>
+          <div className="rounded-xl bg-slate-50 px-2.5 py-1.5">Tồn kho nhiều nhất: <b>{mostStocked.map((p) => `${p.name.split('(')[0].trim()} (${p.stock})`).join(' • ')}</b></div>
           <div className="rounded-xl bg-slate-50 px-2.5 py-1.5">
-            Lợi nhuận (cost 80% giá, demo): <b className="text-green-700">{formatVND(Math.round(profit))}</b>
-            {' '}• KM hiệu quả: <b>có KM {promoEffect.withPromo}</b> / không KM {promoEffect.withoutPromo}
+            Lợi nhuận (giá vốn 80% giá bán): <b className="text-green-700">{formatVND(Math.round(profit))}</b>
+            {' '}• Khuyến mãi hiệu quả: <b>có khuyến mãi {promoEffect.withPromo}</b> / không khuyến mãi {promoEffect.withoutPromo}
           </div>
         </div>
       </div>
@@ -257,7 +269,7 @@ export function DistributorPage() {
           <h2 className="font-bold">Quản lý sản phẩm ({filteredProducts.length}/{products.length})</h2>
           <div className="relative ml-auto">
             <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Tìm theo tên, loại hàng, KM…"
+            <input value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Tìm theo tên, loại hàng, khuyến mãi…"
               className="w-52 rounded-lg border py-1.5 pl-7 pr-2 text-xs" />
           </div>
         </div>
@@ -279,11 +291,12 @@ export function DistributorPage() {
                   <div className="min-w-0"><div className="truncate font-bold">{p.name}</div>
                     <div className="text-xs text-slate-500">{itemById(p.itemId).name}{p.variant ? ` • ${p.variant}` : ''} {p.freeShip ? '• Freeship' : ''}</div></div>
                 </div>
+                {isDistributor && (<>
                 <div className="mt-2 grid grid-cols-3 gap-1 text-xs">
                   <label>Giá<input value={e.price} onChange={(ev) => set({ price: ev.target.value.replace(/[^0-9]/g, '') })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" inputMode="numeric" /></label>
                   <label>Tồn kho<input value={e.stock} onChange={(ev) => set({ stock: ev.target.value.replace(/[^0-9]/g, '') })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" inputMode="numeric" /></label>
                   <label>Khuyến mãi<input value={e.promo} onChange={(ev) => set({ promo: ev.target.value })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" placeholder="VD: -10%" /></label>
-                  <label className="col-span-2">Ảnh (URL demo)<input value={e.imageUrl} onChange={(ev) => set({ imageUrl: ev.target.value })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" placeholder="https://…" inputMode="url" /></label>
+                  <label className="col-span-2">Ảnh (đường dẫn URL)<input value={e.imageUrl} onChange={(ev) => set({ imageUrl: ev.target.value })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" placeholder="https://…" inputMode="url" /></label>
                   <label>Mẫu mã<input value={e.variant} onChange={(ev) => set({ variant: ev.target.value })} className="mt-0.5 w-full rounded-lg border px-1.5 py-1" placeholder="VD: thùng 30 gói" /></label>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -299,8 +312,12 @@ export function DistributorPage() {
                   <button disabled={locked} title={locked ? lockTitle : 'Bật/tắt freeship'} onClick={() => { updateProduct(p.id, { freeShip: !p.freeShip }); }} className="rounded-lg border px-2 py-1 text-xs font-semibold disabled:opacity-40">
                     {p.freeShip ? 'Tắt freeship' : 'Bật freeship'}
                   </button>
-                  <span className="ml-auto text-xs font-semibold text-blue-800">{formatVND(p.price)} • tồn {p.stock}</span>
+                  <span className="ml-auto text-xs font-semibold text-blue-800">{formatVND(p.price)} • còn {p.stock}</span>
                 </div>
+                </>)}
+                {!isDistributor && (
+                  <div className="mt-1.5 text-xs font-semibold text-blue-800">{formatVND(p.price)} • còn {p.stock}</div>
+                )}
               </div>
             );
           })}
@@ -316,7 +333,7 @@ export function DistributorPage() {
             <div key={c.name} className="rounded-xl border p-2 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-bold text-blue-950">{c.name}</span>
-                <span className="ml-auto text-xs text-slate-500">{c.count} đơn • gần nhất {c.lastDate || '—'}</span>
+                <span className="ml-auto text-xs text-slate-500">{c.count} đơn • gần nhất {c.lastDate ? formatDateVN(c.lastDate) : '—'}</span>
               </div>
               <div className="mt-0.5 text-xs text-slate-600">Tổng đã mua: <b className="text-blue-800">{formatVND(c.spent)}</b></div>
             </div>
@@ -340,8 +357,9 @@ export function DistributorPage() {
                 </div>
                 {o.buyerName && <div className="mt-0.5 text-xs text-slate-500">Khách: {o.buyerName}{o.trackingCode ? ` • ${o.trackingCode}` : ''}</div>}
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <select value={o.carrierId ?? ''} onChange={(e) => setOrderCarrier(o.id, e.target.value)} className="rounded-lg border px-1.5 py-1 text-xs">
-                    <option value="">Chọn ĐVVC…</option>
+                  {isDistributor && (<>
+                  <select value={o.carrierId ?? ''} onChange={(e) => setOrderCarrier(o.id, e.target.value)} disabled={locked} title={locked ? lockTitle : 'Chọn đơn vị vận chuyển'} className="rounded-lg border px-1.5 py-1 text-xs disabled:opacity-40">
+                    <option value="">Chọn đơn vị vận chuyển…</option>
                     {carriers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                   {o.status !== 'received' && (
@@ -350,6 +368,7 @@ export function DistributorPage() {
                   {o.status !== 'received' && (
                     <button disabled={locked} title={locked ? lockTitle : 'Hoàn trả đơn'} onClick={() => returnOrder(o.id)} className="rounded-lg border px-2 py-1 text-xs font-semibold text-red-700 disabled:opacity-40">Hoàn trả</button>
                   )}
+                  </>)}
                 </div>
               </div>
             );
@@ -358,8 +377,9 @@ export function DistributorPage() {
       </section>
 
       {/* Tài khoản nhận tiền */}
+      {isDistributor && (
       <section className="rounded-2xl border bg-white p-4">
-        <h2 className="font-bold">Tài khoản nhận tiền (demo)</h2>
+        <h2 className="font-bold">Tài khoản nhận tiền</h2>
         <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-600">Ngân hàng
             <input value={bankDraft.bankName} onChange={(e) => setBankDraft((b) => ({ ...b, bankName: e.target.value }))}
@@ -371,14 +391,15 @@ export function DistributorPage() {
           </label>
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <button onClick={saveBank} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">Lưu tài khoản</button>
+          <button onClick={saveBank} disabled={locked} title={locked ? lockTitle : 'Lưu tài khoản'} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40">Lưu tài khoản</button>
           {bank.acc && <span className="text-xs text-slate-500">Đang dùng: {bank.bankName} • {bank.acc}</span>}
         </div>
       </section>
+      )}
 
       {/* Chat */}
       <section className="rounded-2xl border bg-white p-4">
-        <h2 className="flex items-center gap-1 font-bold"><MessageCircle className="h-4 w-4" /> Chat với khách (demo, chung với bên mua)</h2>
+        <h2 className="flex items-center gap-1 font-bold"><MessageCircle className="h-4 w-4" /> Chat với khách</h2>
         <div className="mt-2 max-h-56 space-y-1.5 overflow-y-auto rounded-xl bg-slate-50 p-2 text-sm">
           {messages.map((m) => {
             const mine = m.fromRole === 'distributor';
@@ -397,11 +418,11 @@ export function DistributorPage() {
       </section>
 
       {/* Modal rút tiền */}
-      {showWithdraw && (
+      {showWithdraw && isDistributor && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setShowWithdraw(false)}>
           <div className="w-full max-w-sm rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold">Rút tiền (demo)</h3>
+              <h3 className="font-bold">Rút tiền</h3>
               <button onClick={() => setShowWithdraw(false)} className="ml-auto rounded-full border p-1" aria-label="Đóng">
                 <X className="h-4 w-4" />
               </button>
@@ -412,9 +433,9 @@ export function DistributorPage() {
                 inputMode="numeric" className="mt-0.5 w-full rounded-lg border px-2 py-1.5 font-mono text-sm" />
             </label>
             <button
-              disabled={!Number(amount)}
+              disabled={!Number(amount) || locked}
               onClick={() => {
-                pushToast(`Đã gửi yêu cầu rút ${formatVND(Number(amount))} (demo) — tiền về sau 1 ngày làm việc`, 'success');
+                pushToast(`Đã gửi yêu cầu rút ${formatVND(Number(amount))} — tiền về sau 1 ngày làm việc`, 'success');
                 setShowWithdraw(false);
               }}
               className="mt-3 w-full rounded-xl bg-green-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">

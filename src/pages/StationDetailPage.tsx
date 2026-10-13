@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Clock, Flag } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { VerifiedBadge } from '../components/ui/Badges';
@@ -9,9 +9,11 @@ import { VietnamBase } from '../components/home/VietnamMap';
 import { project } from '../lib/geo';
 import { NEW_FEATURE_NAME } from '../data/provinces';
 import { calcS } from '../lib/needLogic';
+import { formatDateVN } from '../lib/format';
 
 export function StationDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { hash } = useLocation();
   const st = useAppStore((s) => s.stations.find((x) => x.id === id));
   const pushToast = useAppStore((s) => s.pushToast);
@@ -29,7 +31,10 @@ export function StationDetailPage() {
 
   return (
     <div className="space-y-4 py-6">
-      <Link to="/" className="text-sm text-blue-700">← Về bản đồ</Link>
+      <div className="flex items-center gap-3">
+        <button onClick={() => { if (window.history.length > 1) navigate(-1); else navigate('/quyen-gop'); }} className="text-sm font-semibold text-blue-700 hover:underline">← Quay lại</button>
+        <Link to="/" className="text-sm text-blue-700">Về bản đồ</Link>
+      </div>
       <div className="grid gap-4 md:grid-cols-[1fr_220px]">
         <div className="rounded-3xl border bg-white p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -39,14 +44,14 @@ export function StationDetailPage() {
         <h1 className="mt-2 text-xl font-extrabold text-blue-950 md:text-2xl">{st.name}</h1>
         {!st.verified && (
           <div className="mt-2 rounded-xl border border-yellow-300 bg-yellow-50 p-2 text-xs font-medium text-yellow-900">
-            Trạm đang <b>chờ xác minh</b> (demo) — hãy kiểm tra kỹ giấy tờ và liên hệ trực tiếp trước khi gửi hàng.
+            Trạm đang <b>chờ xác minh</b> — hãy kiểm tra kỹ giấy tờ và liên hệ trực tiếp trước khi gửi hàng.
           </div>
         )}
         <div className="mt-1 text-sm text-slate-600">Đơn vị: {st.org} • Liên hệ: {st.contact}</div>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
           <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{st.address}</span>
           <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{st.pickupHours}</span>
-          <span>SĐT: <MaskedPhone phone={st.phone} /></span>
+          <span>Số điện thoại: <MaskedPhone phone={st.phone} /></span>
         </div>
         {st.provinceOld !== st.province && (
           <div className="mt-1 text-xs text-slate-500">Địa chỉ cũ (trước sáp nhập): {st.address.replace(st.province, st.provinceOld)}</div>
@@ -92,7 +97,7 @@ export function StationDetailPage() {
                   {p.imageLabel}
                 </div>
                 <div className="mt-1 font-semibold">{p.title}</div>
-                <div className="text-xs text-slate-500">{p.date}</div>
+                <div className="text-xs text-slate-500">{formatDateVN(p.date)}</div>
               </div>
             ))}
         </div>
@@ -104,7 +109,7 @@ export function StationDetailPage() {
             <button onClick={() => pushToast('Đã ghi nhận báo cáo, cảm ơn bạn!', 'info')} className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold">
               <Flag className="h-3.5 w-3.5" /> Báo cáo sai lệch
             </button>
-            <button onClick={() => pushToast('Đã gửi liên hệ tới trạm (không lộ SĐT).', 'success')} className="rounded-lg bg-blue-800 px-2 py-1 text-xs font-semibold text-white">
+            <button onClick={() => pushToast('Đã gửi liên hệ tới trạm (không lộ số điện thoại).', 'success')} className="rounded-lg bg-blue-800 px-2 py-1 text-xs font-semibold text-white">
               Liên hệ nhanh
             </button>
           </div>
